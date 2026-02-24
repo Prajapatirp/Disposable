@@ -8,4 +8,5 @@ export { Card, CardHeader, CardTitle, CardContent } from "./card";
 export { DataTable, type Column } from "./data-table";
 export { Pagination } from "./pagination";
 export { Filters } from "./filters";
+export { FilterDrawer } from "./filter-drawer";
 export { LoadingSpinner, PageLoading } from "./loading";

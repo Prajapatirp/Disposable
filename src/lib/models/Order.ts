@@ -13,6 +13,7 @@ export interface IOrderItem {
 
 export interface IOrder {
   _id: mongoose.Types.ObjectId;
+  orderNumber?: string;
   clientId: mongoose.Types.ObjectId;
   items: IOrderItem[];
   status: OrderStatus;
@@ -33,6 +34,7 @@ const OrderItemSchema = new mongoose.Schema<IOrderItem>(
 
 const OrderSchema = new mongoose.Schema<IOrder>(
   {
+    orderNumber: { type: String, unique: true, sparse: true },
     clientId: { type: mongoose.Schema.Types.ObjectId, ref: "Client", required: true },
     items: [OrderItemSchema],
     status: { type: String, required: true, enum: ORDER_STATUSES, default: "Dispatch Stage" },

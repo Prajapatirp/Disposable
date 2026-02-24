@@ -4,17 +4,19 @@ import { useEffect, useState, useCallback } from "react";
 import {
   DataTable,
   Column,
-  Filters,
   Pagination,
   PrimaryButton,
   StatusBadge,
   Modal,
   PageLoading,
+  FilterDrawer,
+  Input,
+  Select,
 } from "@/components/ui";
 import { BillForm } from "@/components/forms/BillForm";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { FileText } from "lucide-react";
+import { FileText, Filter } from "lucide-react";
 
 interface Bill {
   _id: string;
@@ -37,18 +39,26 @@ export default function BillingPage() {
   const [bills, setBills] = useState<Bill[]>([]);
   const [clients, setClients] = useState<{ _id: string; firstName: string; lastName: string }[]>([]);
   const [loading, setLoading] = useState(true);
-  const [clientFilter, setClientFilter] = useState("");
-  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [modalOpen, setModalOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [billNumberFilter, setBillNumberFilter] = useState("");
+  const [clientIdFilter, setClientIdFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
   const fetchBills = useCallback(async () => {
     setLoading(true);
     try {
-      const url = clientFilter
-        ? `/api/bills?clientId=${encodeURIComponent(clientFilter)}`
-        : "/api/bills";
+      const params = new URLSearchParams();
+      if (clientIdFilter) params.set("clientId", clientIdFilter);
+      if (statusFilter) params.set("status", statusFilter);
+      if (billNumberFilter.trim()) params.set("billNumber", billNumberFilter.trim());
+      if (startDate) params.set("startDate", startDate);
+      if (endDate) params.set("endDate", endDate);
+      const url = `/api/bills${params.toString() ? `?${params.toString()}` : ""}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
@@ -58,7 +68,7 @@ export default function BillingPage() {
     } finally {
       setLoading(false);
     }
-  }, [clientFilter]);
+  }, [clientIdFilter, statusFilter, billNumberFilter, startDate, endDate]);
 
   useEffect(() => {
     fetchBills();
@@ -67,9 +77,18 @@ export default function BillingPage() {
   useEffect(() => {
     fetch("/api/clients")
       .then((r) => r.json())
-      .then(setClients)
-      .catch(() => {});
+      .then((data) => (Array.isArray(data) ? setClients(data) : setClients([])))
+      .catch(() => setClients([]));
   }, []);
+
+  useEffect(() => {
+    if (filterOpen && clients.length === 0) {
+      fetch("/api/clients")
+        .then((r) => r.json())
+        .then((data) => (Array.isArray(data) ? setClients(data) : setClients([])))
+        .catch(() => setClients([]));
+    }
+  }, [filterOpen, clients.length]);
 
   const clientName = (b: Bill) => {
     const c = b.clientId;
@@ -77,13 +96,20 @@ export default function BillingPage() {
     return "—";
   };
 
-  const filtered = bills
-    .filter((b) => {
-      const matchClient = !search || clientName(b).toLowerCase().includes(search.toLowerCase());
-      const matchStatus = !statusFilter || b.status === statusFilter;
-      return matchClient && matchStatus;
-    })
-    .sort((a, b) => new Date(b.billDate).getTime() - new Date(a.billDate).getTime());
+  const clearFilters = () => {
+    setStartDate("");
+    setEndDate("");
+    setBillNumberFilter("");
+    setClientIdFilter("");
+    setStatusFilter("");
+    setFilterOpen(false);
+  };
+
+  const applyFilters = () => {
+    setFilterOpen(false);
+  };
+
+  const filtered = bills;
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -102,11 +128,6 @@ export default function BillingPage() {
       toast.error("Failed to update bill");
     }
   }
-
-  const clientOptions = [
-    { value: "", label: "All clients" },
-    ...clients.map((c) => ({ value: c._id, label: `${c.firstName} ${c.lastName}` })),
-  ];
 
   const columns: Column<Bill>[] = [
     { id: "billNumber", header: "Bill #", accessor: "billNumber" },
@@ -151,33 +172,75 @@ export default function BillingPage() {
         </PrimaryButton>
       </div>
 
-      <div className="mb-4">
-        <Filters
-          searchPlaceholder="Search by client..."
-          searchValue={search}
-          onSearchChange={setSearch}
-          dropdownLabel="Client"
-          dropdownOptions={clientOptions}
-          dropdownValue={clientFilter}
-          onDropdownChange={(v) => {
-            setClientFilter(v);
-            setPage(1);
-          }}
-        />
-        <div className="mt-2 flex gap-2">
-          <select
-            className="rounded-md border border-input bg-background px-3 py-2 text-sm"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            {STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="mb-4 flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setFilterOpen(true)}
+          className="gap-2"
+        >
+          <Filter className="h-4 w-4" />
+          Filters
+        </Button>
       </div>
+
+      <FilterDrawer
+        open={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        title="Filter bills"
+        width="md"
+        footer={
+          <>
+            <Button variant="outline" size="sm" onClick={clearFilters}>
+              Clear
+            </Button>
+            <Button variant="primary" size="sm" onClick={applyFilters}>
+              Apply
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Input
+            label="Start date"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+          <Input
+            label="End date"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+          <Input
+            label="Bill number"
+            placeholder="e.g. BILL-2025-0001"
+            value={billNumberFilter}
+            onChange={(e) => setBillNumberFilter(e.target.value)}
+          />
+          <Select
+            label="Client"
+            options={[
+              { value: "", label: "All" },
+              ...clients.map((c) => ({
+                value: c._id,
+                label: `${c.firstName} ${c.lastName}`,
+              })),
+            ]}
+            value={clientIdFilter}
+            onChange={setClientIdFilter}
+            placeholder="All"
+          />
+          <Select
+            label="Status"
+            options={STATUS_OPTIONS}
+            value={statusFilter}
+            onChange={setStatusFilter}
+            placeholder="All"
+          />
+        </div>
+      </FilterDrawer>
 
       {loading ? (
         <PageLoading />

@@ -55,14 +55,14 @@ export function DataTable<T extends { _id: string }>({
         style={isFullHeight ? undefined : { maxHeight }}
       >
         <table className="w-full text-sm">
-          <thead className="sticky top-0 z-10 bg-gray-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
-          <tr className="border-b border-gray-200">
+          <thead className="sticky top-0 z-10 border-b-2 border-gray-200 bg-gray-100">
+          <tr>
             {columns.map((col) => (
               <th
                 key={col.id}
                 className={cn(
-                  "bg-gray-50 px-4 py-3.5 text-left font-semibold text-gray-900",
-                  col.sortable && "cursor-pointer select-none hover:bg-gray-100",
+                  "bg-gray-100 px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-700",
+                  col.sortable && "cursor-pointer select-none hover:bg-gray-200",
                   col.className
                 )}
                 onClick={() => col.sortable && onSort?.(col.id)}
@@ -77,7 +77,11 @@ export function DataTable<T extends { _id: string }>({
                 </span>
               </th>
             ))}
-            {actions && <th className="w-[100px] px-4 py-3.5 text-right font-semibold text-gray-900">Actions</th>}
+            {actions && (
+              <th className="w-[100px] bg-gray-100 px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-700">
+                Actions
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>

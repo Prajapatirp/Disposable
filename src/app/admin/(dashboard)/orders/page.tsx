@@ -5,14 +5,16 @@ import Link from "next/link";
 import {
   DataTable,
   Column,
-  Filters,
   Pagination,
   PageLoading,
   StatusBadge,
+  FilterDrawer,
+  Input,
+  Select,
 } from "@/components/ui";
-import { Button, PrimaryButton, buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2, Filter } from "lucide-react";
 
 interface OrderItem {
   productId: { _id: string; name: string } | string;
@@ -23,6 +25,7 @@ interface OrderItem {
 
 interface Order {
   _id: string;
+  orderNumber?: string;
   clientId: { _id: string; firstName: string; lastName: string; phoneNumber?: string } | string;
   items: OrderItem[];
   status: string;
@@ -38,19 +41,35 @@ const STATUS_OPTIONS = [
   { value: "Cancelled", label: "Cancelled" },
 ];
 
+interface ClientOption {
+  _id: string;
+  firstName: string;
+  lastName: string;
+}
+
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [clients, setClients] = useState<ClientOption[]>([]);
+
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [orderIdFilter, setOrderIdFilter] = useState("");
+  const [clientIdFilter, setClientIdFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const url = statusFilter
-        ? `/api/orders?status=${encodeURIComponent(statusFilter)}`
-        : "/api/orders";
+      const params = new URLSearchParams();
+      if (statusFilter) params.set("status", statusFilter);
+      if (clientIdFilter) params.set("clientId", clientIdFilter);
+      if (orderIdFilter.trim()) params.set("orderId", orderIdFilter.trim());
+      if (startDate) params.set("startDate", startDate);
+      if (endDate) params.set("endDate", endDate);
+      const url = `/api/orders${params.toString() ? `?${params.toString()}` : ""}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
@@ -60,11 +79,20 @@ export default function OrdersPage() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter]);
+  }, [statusFilter, clientIdFilter, orderIdFilter, startDate, endDate]);
 
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
+  useEffect(() => {
+    if (filterOpen && clients.length === 0) {
+      fetch("/api/clients")
+        .then((r) => r.json())
+        .then((data) => (Array.isArray(data) ? setClients(data) : setClients([])))
+        .catch(() => setClients([]));
+    }
+  }, [filterOpen, clients.length]);
 
   const clientName = (o: Order) => {
     const c = o.clientId;
@@ -72,28 +100,23 @@ export default function OrdersPage() {
     return "—";
   };
 
-  const filtered = orders.filter((o) => {
-    const name = clientName(o).toLowerCase();
-    return !search || name.includes(search.toLowerCase());
-  });
+  const clearFilters = () => {
+    setStartDate("");
+    setEndDate("");
+    setOrderIdFilter("");
+    setClientIdFilter("");
+    setStatusFilter("");
+    setFilterOpen(false);
+  };
+
+  const applyFilters = () => {
+    setFilterOpen(false);
+  };
+
+  const filtered = orders;
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  async function markCompleted(id: string) {
-    try {
-      const res = await fetch(`/api/orders/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "Completed" }),
-      });
-      if (!res.ok) throw new Error("Failed to update");
-      toast.success("Order marked as completed");
-      fetchOrders();
-    } catch {
-      toast.error("Failed to update order");
-    }
-  }
 
   async function cancelOrder(id: string) {
     if (!confirm("Cancel this order? It will be marked as Cancelled.")) return;
@@ -114,7 +137,15 @@ export default function OrdersPage() {
   const totalAmount = (o: Order) =>
     o.items.reduce((sum, i) => sum + i.quantity * i.price, 0);
 
+  const orderIdDisplay = (o: Order) =>
+    `Order #${o.orderNumber ?? o._id.slice(-6)} -`;
+
   const columns: Column<Order>[] = [
+    {
+      id: "orderId",
+      header: "Order ID",
+      accessor: (row) => orderIdDisplay(row),
+    },
     {
       id: "client",
       header: "Client",
@@ -155,21 +186,75 @@ export default function OrdersPage() {
         </Link>
       </div>
 
-      <div className="mb-4">
-        <Filters
-          searchPlaceholder="Search by client..."
-          searchValue={search}
-          onSearchChange={setSearch}
-          dropdownLabel="Status"
-          dropdownOptions={STATUS_OPTIONS}
-          dropdownValue={statusFilter}
-          onDropdownChange={setStatusFilter}
-          onClear={() => {
-            setSearch("");
-            setStatusFilter("");
-          }}
-        />
+      <div className="mb-4 flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setFilterOpen(true)}
+          className="gap-2"
+        >
+          <Filter className="h-4 w-4" />
+          Filters
+        </Button>
       </div>
+
+      <FilterDrawer
+        open={filterOpen}
+        onClose={() => setFilterOpen(false)}
+        title="Filter orders"
+        width="md"
+        footer={
+          <>
+            <Button variant="outline" size="sm" onClick={clearFilters}>
+              Clear
+            </Button>
+            <Button variant="primary" size="sm" onClick={applyFilters}>
+              Apply
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <Input
+            label="Start date"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+          <Input
+            label="End date"
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+          <Input
+            label="Order ID"
+            placeholder="e.g. last 6 characters"
+            value={orderIdFilter}
+            onChange={(e) => setOrderIdFilter(e.target.value)}
+          />
+          <Select
+            label="Client"
+            options={[
+              { value: "", label: "All" },
+              ...clients.map((c) => ({
+                value: c._id,
+                label: `${c.firstName} ${c.lastName}`,
+              })),
+            ]}
+            value={clientIdFilter}
+            onChange={setClientIdFilter}
+            placeholder="All"
+          />
+          <Select
+            label="Status"
+            options={STATUS_OPTIONS}
+            value={statusFilter}
+            onChange={setStatusFilter}
+            placeholder="All"
+          />
+        </div>
+      </FilterDrawer>
 
       {loading ? (
         <PageLoading />
@@ -179,18 +264,7 @@ export default function OrdersPage() {
             columns={columns}
             data={paginated}
             actions={(row) => (
-              <div className="flex flex-col items-end gap-2">
-                {row.status === "Dispatch Stage" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => markCompleted(row._id)}
-                    className="w-full sm:w-auto"
-                  >
-                    Mark completed
-                  </Button>
-                )}
-                <div className="flex items-center justify-end gap-1">
+              <div className="flex items-center justify-end gap-1">
                   <Link href={`/admin/orders/${row._id}`}>
                     <Button
                       variant="ghost"
@@ -222,7 +296,6 @@ export default function OrdersPage() {
                     </Button>
                   )}
                 </div>
-              </div>
             )}
           />
           <Pagination

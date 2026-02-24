@@ -36,7 +36,10 @@ export function AdminDashboardShell({ children, email }: AdminDashboardShellProp
           onToggleSidebar={() => setSidebarOpen((o) => !o)}
           sidebarOpen={sidebarOpen}
         />
-        <main className="min-h-0 flex-1 overflow-hidden bg-slate-100 pb-14">
+        <main
+          id="admin-main-content"
+          className="relative min-h-0 flex-1 overflow-hidden bg-slate-100 pb-14"
+        >
           <div className="flex min-h-0 flex-1 flex-col overflow-auto">
             {children}
           </div>

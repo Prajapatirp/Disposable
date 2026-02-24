@@ -10,7 +10,7 @@ export function AdminFooter(_props: AdminFooterProps) {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="fixed inset-x-0 bottom-0 z-20 flex h-14 min-h-14 flex-shrink-0 items-center justify-between gap-4 border-t border-gray-800 bg-black px-4 sm:px-6">
+    <footer className="fixed inset-x-0 bottom-0 z-[60] flex h-14 min-h-14 flex-shrink-0 items-center justify-between gap-4 border-t border-gray-800 bg-black px-4 sm:px-6">
       <div className="flex min-w-0 flex-shrink items-center gap-x-4 sm:gap-x-6">
         <Link
           href="#"

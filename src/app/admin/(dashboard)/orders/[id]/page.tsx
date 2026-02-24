@@ -19,6 +19,7 @@ interface OrderItem {
 
 interface Order {
   _id: string;
+  orderNumber?: string;
   clientId: {
     _id: string;
     firstName: string;
@@ -56,21 +57,6 @@ export default function OrderDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  async function markCompleted() {
-    try {
-      const res = await fetch(`/api/orders/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "Completed" }),
-      });
-      if (!res.ok) throw new Error("Failed");
-      toast.success("Order marked as completed");
-      setOrder((o) => (o ? { ...o, status: "Completed" } : null));
-    } catch {
-      toast.error("Failed to update");
-    }
-  }
-
   if (loading || !order) return <PageLoading />;
 
   const total = order.items.reduce((s, i) => s + i.quantity * i.price, 0);
@@ -84,15 +70,12 @@ export default function OrderDetailPage() {
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">Order #{order._id.slice(-6)}</h1>
+          <h1 className="text-2xl font-bold">Order #{order.orderNumber ?? order._id.slice(-6)} -</h1>
           <p className="text-muted-foreground">
             {order.clientId.firstName} {order.clientId.lastName}
           </p>
         </div>
         <StatusBadge status={order.status} type="order" />
-        {order.status === "Dispatch Stage" && (
-          <Button onClick={markCompleted}>Mark completed</Button>
-        )}
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">

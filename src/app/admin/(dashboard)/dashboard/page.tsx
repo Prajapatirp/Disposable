@@ -7,8 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, Users, ShoppingCart, FileText, Eye, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/ui";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 export default async function DashboardPage() {
   await connectDB();
@@ -190,7 +188,7 @@ export default async function DashboardPage() {
                           <Link
                             href={`/admin/orders/${order._id}`}
                             aria-label={`View order ${order._id}`}
-                            className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-accent hover:text-foreground"
                           >
                             <Eye className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                           </Link>

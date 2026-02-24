@@ -23,6 +23,7 @@ interface Client {
 
 interface Order {
   _id: string;
+  orderNumber?: string;
   createdDate: string;
   items: { quantity: number; price: number }[];
 }
@@ -156,7 +157,7 @@ export function BillForm({ onSuccess, onCancel }: BillFormProps) {
                       className="mr-2"
                     />
                     <span className="text-sm">
-                      Order #{order._id.slice(-6)} —{" "}
+                      Order #{order.orderNumber ?? order._id.slice(-6)} —{" "}
                       {new Date(order.createdDate).toLocaleDateString()} — ₹
                       {orderTotal.toLocaleString()}
                     </span>
