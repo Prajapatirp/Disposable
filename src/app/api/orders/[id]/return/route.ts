@@ -97,17 +97,15 @@ export async function POST(
       .populate("items.productId", "name category variants")
       .lean();
     if (!result) return NextResponse.json({ error: "Order not found" }, { status: 404 });
-    const resultItems = (result.items || []).map(
-      (item: { productId: { _id: string; name: string; variants?: { _id: unknown; variantName: string }[] }; variantId: unknown; quantity: number; price: number; returnedQuantity?: number }) => {
-        const product = item.productId as { _id: string; name: string; variants?: { _id: unknown; variantName: string }[] };
-        const variant = product?.variants?.find((v) => String(v._id) === String(item.variantId));
-        return {
-          ...item,
-          variantName: variant?.variantName ?? null,
-          returnedQuantity: item.returnedQuantity ?? 0,
-        };
-      }
-    );
+    const resultItems = (result.items || []).map((item) => {
+      const product = item.productId as unknown as { _id: string; name: string; variants?: { _id: unknown; variantName: string }[] } | null;
+      const variant = product?.variants?.find((v) => String(v._id) === String(item.variantId));
+      return {
+        ...item,
+        variantName: variant?.variantName ?? null,
+        returnedQuantity: item.returnedQuantity ?? 0,
+      };
+    });
     return NextResponse.json({ ...result, items: resultItems });
   } catch (e) {
     console.error(e);

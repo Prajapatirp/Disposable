@@ -41,8 +41,8 @@ export async function GET(
       .populate("items.productId", "name category variants")
       .lean();
     if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
-    const items = (order.items || []).map((item: { productId: { _id: string; name: string; variants?: { _id: unknown; variantName: string }[] }; variantId: unknown; quantity: number; price: number; returnedQuantity?: number }) => {
-      const product = item.productId as { _id: string; name: string; variants?: { _id: unknown; variantName: string }[] };
+    const items = (order.items || []).map((item) => {
+      const product = item.productId as unknown as { _id: string; name: string; variants?: { _id: unknown; variantName: string }[] } | null;
       const variant = product?.variants?.find((v) => String(v._id) === String(item.variantId));
       return {
         ...item,
