@@ -121,7 +121,7 @@ export default function ProductsPage() {
   const columns: Column<Product>[] = [
     {
       id: "name",
-      header: "Name",
+      header: "NAME",
       accessor: (row) => (
         <Link
           href={`/admin/products/${row._id}`}
@@ -132,10 +132,10 @@ export default function ProductsPage() {
       ),
       sortable: true,
     },
-    { id: "category", header: "Category", accessor: "category", sortable: true },
+    { id: "category", header: "CATEGORY", accessor: "category", sortable: true },
     {
       id: "variants",
-      header: "Variants",
+      header: "VARIANTS",
       accessor: (row) => row.variants?.length ?? 0,
     },
   ];
@@ -214,7 +214,7 @@ export default function ProductsPage() {
           <PageLoading />
         ) : (
           <>
-            <div className="min-h-0 flex-1 overflow-hidden">
+            <div className="relative min-h-0 flex-1 overflow-hidden" style={{ minHeight: 200 }}>
               <DataTable
                 columns={columns}
                 data={paginated}
@@ -223,7 +223,7 @@ export default function ProductsPage() {
                 onSort={handleSort}
                 striped
                 maxHeight="100%"
-                className="h-full"
+                className="h-full min-h-0 w-full flex-1 rounded-none border-0 shadow-none"
                 emptyMessage="No records found."
               actions={(row) => (
                 <div className="flex justify-end gap-1">
@@ -254,8 +254,7 @@ export default function ProductsPage() {
               )}
               />
             </div>
-            <div className="shrink-0 border-t border-gray-200 bg-gray-50/50 px-4 py-2">
-              <Pagination
+            <Pagination
               page={page}
               totalPages={totalPages}
               totalRecords={totalRecords}
@@ -266,8 +265,8 @@ export default function ProductsPage() {
                 setPage(1);
               }}
               pageSizeOptions={PAGE_SIZE_OPTIONS}
-              />
-            </div>
+              className="shrink-0 rounded-b-lg border-t border-gray-200"
+            />
           </>
         )}
       </div>

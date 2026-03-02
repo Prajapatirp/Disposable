@@ -9,6 +9,8 @@ export interface IOrderItem {
   variantId: mongoose.Types.ObjectId;
   quantity: number;
   price: number;
+  /** Quantity already returned (added back to stock). Default 0. */
+  returnedQuantity?: number;
 }
 
 export interface IOrder {
@@ -28,6 +30,7 @@ const OrderItemSchema = new mongoose.Schema<IOrderItem>(
     variantId: { type: mongoose.Schema.Types.ObjectId, required: true },
     quantity: { type: Number, required: true },
     price: { type: Number, required: true },
+    returnedQuantity: { type: Number, default: 0 },
   },
   { _id: true }
 );

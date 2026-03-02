@@ -122,7 +122,7 @@ export function AdminSidebar({ open, onClose, onOpen }: AdminSidebarProps) {
       {/* Desktop: spacer for layout; actual sidebar is fixed below */}
       <div
         className={cn(
-          "hidden shrink-0 transition-[width] duration-200 ease-out md:block",
+          "hidden shrink-0 transition-[width] duration-200 ease-out md:block print:hidden",
           open ? "w-64" : "w-16"
         )}
         style={{ minHeight: "100vh" }}
@@ -131,7 +131,7 @@ export function AdminSidebar({ open, onClose, onOpen }: AdminSidebarProps) {
       {/* Desktop: fixed sidebar from top to above footer */}
       <aside
         className={cn(
-          "fixed left-0 top-0 bottom-14 z-30 hidden flex-col bg-[#7C3AED] transition-[width] duration-200 ease-out md:flex",
+          "fixed left-0 top-0 bottom-14 z-30 hidden flex-col bg-[#7C3AED] transition-[width] duration-200 ease-out md:flex print:hidden",
           open ? "w-64" : "w-16"
         )}
       >
@@ -145,14 +145,14 @@ export function AdminSidebar({ open, onClose, onOpen }: AdminSidebarProps) {
       {/* Mobile: overlay sidebar (stops above footer when open) */}
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          className="fixed inset-0 z-40 bg-black/50 md:hidden print:hidden"
           aria-hidden="true"
           onClick={onClose}
         />
       )}
       <aside
         className={cn(
-          "fixed left-0 top-0 bottom-14 z-50 flex w-64 flex-col bg-[#7C3AED] shadow-xl transition-transform duration-200 ease-out md:hidden",
+          "fixed left-0 top-0 bottom-14 z-50 flex w-64 flex-col bg-[#7C3AED] shadow-xl transition-transform duration-200 ease-out md:hidden print:hidden",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >

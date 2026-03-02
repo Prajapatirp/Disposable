@@ -38,10 +38,19 @@ export async function GET(
     await connectDB();
     const order = await Order.findById(id)
       .populate("clientId", "firstName lastName phoneNumber address businessName gstNumber companyAddress")
-      .populate("items.productId", "name category")
+      .populate("items.productId", "name category variants")
       .lean();
     if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
-    return NextResponse.json(order);
+    const items = (order.items || []).map((item: { productId: { _id: string; name: string; variants?: { _id: unknown; variantName: string }[] }; variantId: unknown; quantity: number; price: number; returnedQuantity?: number }) => {
+      const product = item.productId as { _id: string; name: string; variants?: { _id: unknown; variantName: string }[] };
+      const variant = product?.variants?.find((v) => String(v._id) === String(item.variantId));
+      return {
+        ...item,
+        variantName: variant?.variantName ?? null,
+        returnedQuantity: item.returnedQuantity ?? 0,
+      };
+    });
+    return NextResponse.json({ ...order, items });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: "Failed to fetch order" }, { status: 500 });
@@ -68,9 +77,18 @@ export async function PATCH(
       );
     }
     await connectDB();
+    const newStatus = parsed.data.status;
+
+    if (newStatus === "Returned") {
+      return NextResponse.json(
+        { error: "Use the Return order form to process returns (partial or full)" },
+        { status: 400 }
+      );
+    }
+
     const order = await Order.findByIdAndUpdate(
       id,
-      { $set: { status: parsed.data.status } },
+      { $set: { status: newStatus } },
       { new: true }
     )
       .populate("clientId", "firstName lastName phoneNumber address businessName")

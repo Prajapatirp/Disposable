@@ -22,7 +22,7 @@ interface DataTableProps<T extends { _id: string }> {
   className?: string;
   /** Alternating row background (white / gray-50) */
   striped?: boolean;
-  /** Max height for table scroll area (default: 60vh). Only the table body scrolls. */
+  /** Max height for the scrollable body area (default: 60vh). Only the tbody scrolls; thead stays fixed. */
   maxHeight?: string;
 }
 
@@ -46,16 +46,17 @@ export function DataTable<T extends { _id: string }>({
         isFullHeight && "flex h-full min-h-0 flex-col",
         className
       )}
+      style={isFullHeight ? { minHeight: 0 } : undefined}
     >
       <div
         className={cn(
           "overflow-auto overflow-x-auto",
           isFullHeight && "min-h-0 flex-1"
         )}
-        style={isFullHeight ? undefined : { maxHeight }}
+        style={isFullHeight ? { minHeight: 0 } : { maxHeight }}
       >
-        <table className="w-full text-sm">
-          <thead className="sticky top-0 z-10 border-b-2 border-gray-200 bg-gray-100">
+        <table className="w-full border-collapse text-sm">
+          <thead className="sticky top-0 z-20 border-b-2 border-gray-200 bg-gray-100 shadow-[0_1px_3px_0_rgba(0,0,0,0.08)] [&>tr]:bg-gray-100">
           <tr>
             {columns.map((col) => (
               <th
@@ -78,8 +79,8 @@ export function DataTable<T extends { _id: string }>({
               </th>
             ))}
             {actions && (
-              <th className="w-[100px] bg-gray-100 px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-700">
-                Actions
+              <th className="sticky top-0 z-20 w-[100px] bg-gray-100 px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-700">
+                ACTIONS
               </th>
             )}
           </tr>

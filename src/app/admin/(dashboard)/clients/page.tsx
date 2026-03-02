@@ -35,13 +35,14 @@ function formatAddress(c: Client): string {
   return c.address ?? "—";
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [sortKey, setSortKey] = useState<string>("");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
@@ -63,6 +64,10 @@ export default function ClientsPage() {
     fetchClients();
   }, [fetchClients]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
   const filtered = clients
     .filter((p) => {
       const full = `${p.firstName} ${p.lastName} ${p.phoneNumber} ${formatAddress(p)}`.toLowerCase();
@@ -77,8 +82,14 @@ export default function ClientsPage() {
       return String(aVal).localeCompare(String(bVal)) * dir;
     });
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const totalRecords = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setPage(1);
+  };
 
   const handleSort = (key: string) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -103,7 +114,7 @@ export default function ClientsPage() {
   const columns: Column<Client>[] = [
     {
       id: "firstName",
-      header: "Name",
+      header: "NAME",
       accessor: (row) => (
         <Link
           href={`/admin/clients/${row._id}`}
@@ -114,16 +125,16 @@ export default function ClientsPage() {
       ),
       sortable: true,
     },
-    { id: "phoneNumber", header: "Phone", accessor: "phoneNumber", sortable: true },
-    { id: "address", header: "Address", accessor: (row) => formatAddress(row) },
-    { id: "businessName", header: "Business", accessor: (row) => row.businessName ?? "—" },
+    { id: "phoneNumber", header: "PHONE", accessor: "phoneNumber", sortable: true },
+    { id: "address", header: "ADDRESS", accessor: (row) => formatAddress(row) },
+    { id: "businessName", header: "BUSINESS", accessor: (row) => row.businessName ?? "—" },
   ];
 
   return (
-    <div className="p-4 sm:p-6">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-6">
+      <div className="mb-4 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Clients</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-primary">Clients</h1>
           <p className="text-muted-foreground">Manage clients and their details</p>
         </div>
         <Link
@@ -135,7 +146,7 @@ export default function ClientsPage() {
         </Link>
       </div>
 
-      <div className="mb-4">
+      <div className="mb-4 shrink-0">
         <Filters
           searchPlaceholder="Search clients..."
           searchValue={search}
@@ -147,47 +158,56 @@ export default function ClientsPage() {
       {loading ? (
         <PageLoading />
       ) : (
-        <>
-          <DataTable
-            columns={columns}
-            data={paginated}
-            sortKey={sortKey}
-            sortDir={sortDir}
-            onSort={handleSort}
-            actions={(row) => (
-              <div className="flex justify-end gap-2">
-                <Link
-                  href={`/admin/clients/${row._id}`}
-                  aria-label="View client details"
-                  className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
-                >
-                  <Eye className="h-4 w-4" />
-                </Link>
-                <Link
-                  href={`/admin/clients/${row._id}/edit`}
-                  aria-label="Edit"
-                  className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDelete(row._id)}
-                  aria-label="Delete"
-                  className="text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-          />
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="relative min-h-0 flex-1 overflow-hidden" style={{ minHeight: 200 }}>
+            <DataTable
+              columns={columns}
+              data={paginated}
+              sortKey={sortKey}
+              sortDir={sortDir}
+              onSort={handleSort}
+              className="h-full min-h-0 w-full flex-1 rounded-none border-0 shadow-none"
+              maxHeight="100%"
+              actions={(row) => (
+                <div className="flex justify-end gap-2">
+                  <Link
+                    href={`/admin/clients/${row._id}`}
+                    aria-label="View client details"
+                    className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Link>
+                  <Link
+                    href={`/admin/clients/${row._id}/edit`}
+                    aria-label="Edit"
+                    className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDelete(row._id)}
+                    aria-label="Delete"
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            />
+          </div>
           <Pagination
             page={page}
             totalPages={totalPages}
+            totalRecords={totalRecords}
             onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={handlePageSizeChange}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            className="shrink-0 rounded-b-lg border-t border-gray-200"
           />
-        </>
+        </div>
       )}
     </div>
   );

@@ -1,20 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageLoading } from "@/components/ui/loading";
-import { ArrowLeft } from "lucide-react";
+import { ReturnOrderModal, type ReturnOrderItem } from "@/components/forms/ReturnOrderModal";
+import { ArrowLeft, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
 interface OrderItem {
   productId: { _id: string; name: string };
   variantId: string;
+  variantName?: string | null;
   quantity: number;
   price: number;
+  returnedQuantity?: number;
 }
 
 interface Order {
@@ -41,12 +44,13 @@ interface Order {
 
 export default function OrderDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const id = params.id as string;
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [returnModalOpen, setReturnModalOpen] = useState(false);
 
-  useEffect(() => {
+  const fetchOrder = () => {
+    setLoading(true);
     fetch(`/api/orders/${id}`)
       .then((r) => r.json())
       .then((data) => {
@@ -55,7 +59,23 @@ export default function OrderDetailPage() {
       })
       .catch(() => toast.error("Failed to load order"))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchOrder();
   }, [id]);
+
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get("openReturn") === "1" && order?.status === "Completed") {
+      const hasRemaining = order.items.some((item) => (item.returnedQuantity ?? 0) < item.quantity);
+      if (hasRemaining) setReturnModalOpen(true);
+    }
+  }, [searchParams, order?.status, order?.items]);
+
+  const canReturn =
+    order?.status === "Completed" &&
+    order.items.some((item) => (item.returnedQuantity ?? 0) < item.quantity);
 
   if (loading || !order) return <PageLoading />;
 
@@ -75,7 +95,20 @@ export default function OrderDetailPage() {
             {order.clientId.firstName} {order.clientId.lastName}
           </p>
         </div>
-        <StatusBadge status={order.status} type="order" />
+        <div className="flex items-center gap-2">
+          {canReturn && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setReturnModalOpen(true)}
+              className="gap-2 text-blue-600 hover:bg-blue-500/10 hover:text-blue-600"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Return order
+            </Button>
+          )}
+          <StatusBadge status={order.status} type="order" />
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -118,7 +151,9 @@ export default function OrderDetailPage() {
               <thead>
                 <tr className="border-b">
                   <th className="pb-2 text-left">Product</th>
+                  <th className="pb-2 text-left">Variant</th>
                   <th className="pb-2 text-right">Qty</th>
+                  <th className="pb-2 text-right">Returned</th>
                   <th className="pb-2 text-right">Price</th>
                   <th className="pb-2 text-right">Subtotal</th>
                 </tr>
@@ -131,7 +166,9 @@ export default function OrderDetailPage() {
                         ? item.productId.name
                         : item.productId}
                     </td>
+                    <td className="py-2">{item.variantName ?? item.variantId}</td>
                     <td className="text-right">{item.quantity}</td>
+                    <td className="text-right">{item.returnedQuantity ?? 0}</td>
                     <td className="text-right">₹{item.price}</td>
                     <td className="text-right">
                       ₹{(item.quantity * item.price).toLocaleString()}
@@ -144,6 +181,14 @@ export default function OrderDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      <ReturnOrderModal
+        open={returnModalOpen}
+        onClose={() => setReturnModalOpen(false)}
+        orderId={id}
+        items={order.items as ReturnOrderItem[]}
+        onSuccess={fetchOrder}
+      />
     </div>
   );
 }

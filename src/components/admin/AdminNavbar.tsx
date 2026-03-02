@@ -41,7 +41,7 @@ export function AdminNavbar({ email, onToggleSidebar, sidebarOpen }: AdminNavbar
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex h-14 shrink-0 flex-nowrap items-center gap-2 border-b border-white/10 bg-black px-3 shadow-sm sm:gap-4 sm:px-6">
+      <header className="sticky top-0 z-40 flex h-14 shrink-0 flex-nowrap items-center gap-2 border-b border-white/10 bg-black px-3 shadow-sm sm:gap-4 sm:px-6 print:hidden">
         <Button
           variant="ghost"
           size="icon"

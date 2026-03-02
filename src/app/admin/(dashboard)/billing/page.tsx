@@ -16,7 +16,7 @@ import {
 import { BillForm } from "@/components/forms/BillForm";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { FileText, Filter } from "lucide-react";
+import { FileText, Filter, Printer, Download } from "lucide-react";
 
 interface Bill {
   _id: string;
@@ -28,7 +28,7 @@ interface Bill {
   paidDate?: string;
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE_OPTIONS = [10, 20, 50];
 const STATUS_OPTIONS = [
   { value: "", label: "All" },
   { value: "Pending", label: "Pending" },
@@ -40,6 +40,7 @@ export default function BillingPage() {
   const [clients, setClients] = useState<{ _id: string; firstName: string; lastName: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [modalOpen, setModalOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
 
@@ -110,9 +111,14 @@ export default function BillingPage() {
   };
 
   const filtered = bills;
+  const totalRecords = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setPage(1);
+  };
 
   async function markPaid(id: string) {
     try {
@@ -130,40 +136,40 @@ export default function BillingPage() {
   }
 
   const columns: Column<Bill>[] = [
-    { id: "billNumber", header: "Bill #", accessor: "billNumber" },
+    { id: "billNumber", header: "BILL #", accessor: "billNumber" },
     {
       id: "client",
-      header: "Client",
+      header: "CLIENT",
       accessor: (row) => clientName(row),
     },
     {
       id: "totalAmount",
-      header: "Amount",
+      header: "AMOUNT",
       accessor: (row) => `₹${row.totalAmount.toLocaleString()}`,
     },
     {
       id: "status",
-      header: "Status",
+      header: "STATUS",
       accessor: (row) => <StatusBadge status={row.status} type="bill" />,
     },
     {
       id: "billDate",
-      header: "Date",
+      header: "DATE",
       accessor: (row) => new Date(row.billDate).toLocaleDateString(),
     },
     {
       id: "paidDate",
-      header: "Paid on",
+      header: "PAID ON",
       accessor: (row) =>
         row.paidDate ? new Date(row.paidDate).toLocaleDateString() : "—",
     },
   ];
 
   return (
-    <div className="p-4 sm:p-6">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-6">
+      <div className="mb-4 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Billing</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-primary">Billing</h1>
           <p className="text-muted-foreground">Generate and manage bills</p>
         </div>
         <PrimaryButton onClick={() => setModalOpen(true)}>
@@ -172,7 +178,7 @@ export default function BillingPage() {
         </PrimaryButton>
       </div>
 
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-4 shrink-0 flex items-center gap-2">
         <Button
           variant="outline"
           size="sm"
@@ -245,30 +251,57 @@ export default function BillingPage() {
       {loading ? (
         <PageLoading />
       ) : (
-        <>
-          <DataTable
-            columns={columns}
-            data={paginated}
-            actions={(row) => (
-              <div className="flex justify-end">
-                {row.status === "Pending" && (
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="relative min-h-0 flex-1 overflow-hidden" style={{ minHeight: 200 }}>
+            <DataTable
+              columns={columns}
+              data={paginated}
+              className="h-full min-h-0 w-full flex-1 rounded-none border-0 shadow-none"
+              maxHeight="100%"
+              actions={(row) => (
+                <div className="flex justify-end gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => markPaid(row._id)}
+                    onClick={() => window.open(`/admin/billing/bill/${row._id}`, "_blank")}
+                    className="gap-1"
                   >
-                    Mark paid
+                    <Printer className="h-4 w-4" />
+                    Print
                   </Button>
-                )}
-              </div>
-            )}
-          />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(`/admin/billing/bill/${row._id}`, "_blank")}
+                    className="gap-1"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download
+                  </Button>
+                  {row.status === "Pending" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => markPaid(row._id)}
+                    >
+                      Mark paid
+                    </Button>
+                  )}
+                </div>
+              )}
+            />
+          </div>
           <Pagination
             page={page}
             totalPages={totalPages}
+            totalRecords={totalRecords}
             onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={handlePageSizeChange}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            className="shrink-0 rounded-b-lg border-t border-gray-200"
           />
-        </>
+        </div>
       )}
 
       <Modal

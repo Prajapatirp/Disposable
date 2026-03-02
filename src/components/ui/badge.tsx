@@ -26,6 +26,8 @@ const badgeVariants = cva(
           "border-transparent bg-emerald-500/20 text-emerald-700 dark:text-emerald-400",
         cancelled:
           "border-transparent bg-muted text-muted-foreground",
+        returned:
+          "border-transparent bg-blue-500/20 text-blue-700 dark:text-blue-400",
       },
     },
     defaultVariants: {
@@ -60,8 +62,10 @@ export function StatusBadge({
         : "pending"
       : status === "Completed"
         ? "completed"
-        : status === "Cancelled"
-          ? "cancelled"
-          : "dispatch";
+        : status === "Returned"
+          ? "returned"
+          : status === "Cancelled"
+            ? "cancelled"
+            : "dispatch";
   return <Badge variant={variant}>{status}</Badge>;
 }

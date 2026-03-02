@@ -14,7 +14,7 @@ import {
 } from "@/components/ui";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Eye, Pencil, Trash2, Filter } from "lucide-react";
+import { Eye, Pencil, Trash2, Filter, RotateCcw } from "lucide-react";
 
 interface OrderItem {
   productId: { _id: string; name: string } | string;
@@ -33,11 +33,12 @@ interface Order {
   hasBill?: boolean;
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE_OPTIONS = [10, 20, 50];
 const STATUS_OPTIONS = [
   { value: "", label: "All" },
   { value: "Dispatch Stage", label: "Dispatch Stage" },
   { value: "Completed", label: "Completed" },
+  { value: "Returned", label: "Returned" },
   { value: "Cancelled", label: "Cancelled" },
 ];
 
@@ -51,6 +52,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [filterOpen, setFilterOpen] = useState(false);
   const [clients, setClients] = useState<ClientOption[]>([]);
 
@@ -114,9 +116,14 @@ export default function OrdersPage() {
   };
 
   const filtered = orders;
+  const totalRecords = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+  const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setPage(1);
+  };
 
   async function cancelOrder(id: string) {
     if (!confirm("Cancel this order? It will be marked as Cancelled.")) return;
@@ -126,11 +133,14 @@ export default function OrdersPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "Cancelled" }),
       });
-      if (!res.ok) throw new Error("Failed to update");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to update");
+      }
       toast.success("Order cancelled");
       fetchOrders();
-    } catch {
-      toast.error("Failed to cancel order");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to cancel order");
     }
   }
 
@@ -143,42 +153,42 @@ export default function OrdersPage() {
   const columns: Column<Order>[] = [
     {
       id: "orderId",
-      header: "Order ID",
+      header: "ORDER ID",
       accessor: (row) => orderIdDisplay(row),
     },
     {
       id: "client",
-      header: "Client",
+      header: "CLIENT",
       accessor: (row) => clientName(row),
     },
     {
       id: "items",
-      header: "Items",
+      header: "ITEMS",
       accessor: (row) => row.items.length,
     },
     {
       id: "total",
-      header: "Total",
+      header: "TOTAL",
       accessor: (row) => `₹${totalAmount(row).toLocaleString()}`,
     },
     {
       id: "status",
-      header: "Status",
+      header: "STATUS",
       accessor: (row) => <StatusBadge status={row.status} type="order" />,
     },
     {
       id: "createdDate",
-      header: "Date",
+      header: "DATE",
       accessor: (row) =>
         new Date(row.createdDate).toLocaleDateString(),
     },
   ];
 
   return (
-    <div className="p-4 sm:p-6">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-6">
+      <div className="mb-4 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Orders</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-primary">Orders</h1>
           <p className="text-muted-foreground">Create and manage client orders</p>
         </div>
         <Link href="/admin/orders/new" className={buttonVariants({ variant: "primary" })}>
@@ -186,7 +196,7 @@ export default function OrdersPage() {
         </Link>
       </div>
 
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-4 shrink-0 flex items-center gap-2">
         <Button
           variant="outline"
           size="sm"
@@ -259,12 +269,15 @@ export default function OrdersPage() {
       {loading ? (
         <PageLoading />
       ) : (
-        <>
-          <DataTable
-            columns={columns}
-            data={paginated}
-            actions={(row) => (
-              <div className="flex items-center justify-end gap-1">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div className="relative min-h-0 flex-1 overflow-hidden" style={{ minHeight: 200 }}>
+            <DataTable
+              columns={columns}
+              data={paginated}
+              className="h-full min-h-0 w-full flex-1 rounded-none border-0 shadow-none"
+              maxHeight="100%"
+              actions={(row) => (
+                <div className="flex items-center justify-end gap-1">
                   <Link href={`/admin/orders/${row._id}`}>
                     <Button
                       variant="ghost"
@@ -284,6 +297,15 @@ export default function OrdersPage() {
                       <Pencil className="h-4 w-4" />
                     </Link>
                   )}
+                  {row.status === "Completed" && (
+                    <Link
+                      href={`/admin/orders/${row._id}?openReturn=1`}
+                      aria-label="Return order"
+                      className={buttonVariants({ variant: "ghost", size: "icon" }) + " rounded-lg text-blue-600 transition-colors hover:bg-blue-500/15 hover:text-blue-600"}
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </Link>
+                  )}
                   {row.status === "Dispatch Stage" && (
                     <Button
                       variant="ghost"
@@ -296,14 +318,20 @@ export default function OrdersPage() {
                     </Button>
                   )}
                 </div>
-            )}
-          />
+              )}
+            />
+          </div>
           <Pagination
             page={page}
             totalPages={totalPages}
+            totalRecords={totalRecords}
             onPageChange={setPage}
+            pageSize={pageSize}
+            onPageSizeChange={handlePageSizeChange}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            className="shrink-0 rounded-b-lg border-t border-gray-200"
           />
-        </>
+        </div>
       )}
     </div>
   );
