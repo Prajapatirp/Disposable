@@ -25,7 +25,7 @@ src/
 └── components/admin/
     ├── NotificationDropdown.tsx  # Bell + badge + dropdown
     └── AdminNavbar.tsx           # Uses NotificationDropdown
-vercel.json                        # Cron: /api/cron/run-notifications every 1 min (testing)
+vercel.json                        # Cron: /api/cron/run-notifications every 12 hours
 ```
 
 ## Logic flow
@@ -52,4 +52,4 @@ vercel.json                        # Cron: /api/cron/run-notifications every 1 m
 
 ## Cron (Vercel)
 
-`vercel.json` runs `/api/cron/run-notifications` every 1 minute (testing). For production, change to every 5 min or 24h for dispatch as needed.
+`vercel.json` runs `/api/cron/run-notifications` every 12 hours (`0 */12 * * *` — at 00:00 and 12:00 UTC).
