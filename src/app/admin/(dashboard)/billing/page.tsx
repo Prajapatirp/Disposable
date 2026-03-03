@@ -260,7 +260,7 @@ export default function BillingPage() {
               maxHeight="100%"
               actions={(row) => (
                 <div className="flex justify-end gap-2">
-                  <Button
+                  {/* <Button
                     variant="outline"
                     size="sm"
                     onClick={() => window.open(`/admin/billing/bill/${row._id}`, "_blank")}
@@ -268,7 +268,7 @@ export default function BillingPage() {
                   >
                     <Printer className="h-4 w-4" />
                     Print
-                  </Button>
+                  </Button> */}
                   <Button
                     variant="outline"
                     size="sm"
