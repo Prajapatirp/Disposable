@@ -173,6 +173,7 @@ export async function POST(req: NextRequest) {
         auth.session.email ?? "Admin"
       );
     }
+    
 
     // Decrement product variant quantities for each completed order (only net/remaining qty; returned qty already restored)
     for (const order of orders) {
