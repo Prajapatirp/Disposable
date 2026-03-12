@@ -43,6 +43,7 @@ function formatAddress(client: Client): string {
 
 interface Order {
   _id: string;
+  orderNumber?: string;
   status: string;
   createdDate: string;
   items: { quantity: number; price: number }[];
@@ -149,7 +150,7 @@ export default function ClientProfilePage() {
                           href={`/admin/orders/${order._id}`}
                           className="font-medium text-primary hover:underline"
                         >
-                          Order #{order._id.slice(-6)}
+                          Order #{order.orderNumber ?? order._id.slice(-6)}
                         </Link>
                         <span className="text-muted-foreground">
                           {new Date(order.createdDate).toLocaleDateString()} — ₹

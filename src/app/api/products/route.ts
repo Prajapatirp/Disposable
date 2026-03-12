@@ -18,12 +18,38 @@ const CreateProductSchema = z.object({
   variants: z.array(VariantSchema).default([]),
 });
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const auth = await requireAuth();
   if (auth.error) return auth.error;
   try {
     await connectDB();
-    const products = await Product.find().sort({ createdAt: -1 }).lean();
+    const { searchParams } = new URL(req.url);
+    const search = searchParams.get("search")?.trim();
+    const category = searchParams.get("category");
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+
+    const filter: Record<string, unknown> = {};
+    if (category) filter.category = category;
+    if (search) {
+      filter.$or = [
+        { name: new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i") },
+        { category: new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i") },
+      ];
+    }
+    if (startDate || endDate) {
+      filter.createdAt = {};
+      if (startDate) {
+        (filter.createdAt as Record<string, Date>).$gte = new Date(startDate);
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        (filter.createdAt as Record<string, Date>).$lte = end;
+      }
+    }
+
+    const products = await Product.find(filter).sort({ createdAt: -1 }).lean();
     return NextResponse.json(products);
   } catch (e) {
     console.error(e);

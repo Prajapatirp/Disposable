@@ -7,13 +7,12 @@ import {
   LogOut,
   Menu,
   ChevronDown,
-  Mail,
-  Bell,
   User,
   KeyRound,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { NotificationDropdown } from "./NotificationDropdown";
 
 function getDisplayName(email: string | null | undefined): string {
   if (!email) return "Admin";
@@ -41,7 +40,7 @@ export function AdminNavbar({ email, onToggleSidebar, sidebarOpen }: AdminNavbar
 
   return (
     <>
-      <header className="sticky top-0 z-40 flex h-14 shrink-0 flex-nowrap items-center gap-2 border-b border-white/10 bg-black px-3 shadow-sm sm:gap-4 sm:px-6">
+      <header className="sticky top-0 z-40 flex h-14 shrink-0 flex-nowrap items-center gap-2 border-b border-white/10 bg-black px-3 shadow-sm sm:gap-4 sm:px-6 print:hidden">
         <Button
           variant="ghost"
           size="icon"
@@ -62,22 +61,15 @@ export function AdminNavbar({ email, onToggleSidebar, sidebarOpen }: AdminNavbar
         </span>
 
         <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
-          <Button
+          {/* <Button
             variant="ghost"
             size="icon"
             className="rounded-full text-white/80 hover:bg-white/10 hover:text-white"
             aria-label="Messages"
           >
             <Mail className="h-5 w-5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full text-white/80 hover:bg-white/10 hover:text-white"
-            aria-label="Notifications"
-          >
-            <Bell className="h-5 w-5" />
-          </Button>
+          </Button> */}
+          <NotificationDropdown />
 
           <div className="relative">
             <Button

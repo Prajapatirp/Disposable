@@ -13,6 +13,8 @@ export interface IBill {
   status: BillStatus;
   billDate: Date;
   paidDate?: Date;
+  /** Set when this bill is replaced by a new one (status becomes Superseded). */
+  replacedByBillId?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -26,6 +28,7 @@ const BillSchema = new mongoose.Schema<IBill>(
     status: { type: String, required: true, enum: BILL_STATUSES, default: "Pending" },
     billDate: { type: Date, default: Date.now },
     paidDate: { type: Date },
+    replacedByBillId: { type: mongoose.Schema.Types.ObjectId, ref: "Bill" },
   },
   { timestamps: true }
 );

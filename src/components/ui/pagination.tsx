@@ -51,20 +51,25 @@ export function Pagination({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 border-t border-gray-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
+        "flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 bg-white px-4 py-3",
         className
       )}
       aria-label="Pagination"
     >
-      {showFullPagination ? (
-        <div className="text-sm text-gray-600">
-          Total Records: <span className="font-medium">{totalRecords}</span>
-        </div>
-      ) : (
-        <span className="text-sm text-gray-600">Page {page} of {totalPages}</span>
-      )}
-      <div className="flex flex-wrap items-center gap-2">
-        <nav className="flex items-center gap-0.5">
+      {/* Left: Total Records */}
+      <div className="text-sm text-gray-600">
+        {showFullPagination ? (
+          <>
+            Total Records: <span className="font-medium">{totalRecords}</span>
+          </>
+        ) : (
+          <>Page {page} of {totalPages}</>
+        )}
+      </div>
+
+      {/* Center + Right: Page numbers and Per page selector in one row */}
+      <div className="flex flex-wrap items-center gap-3">
+        <nav className="flex items-center gap-0.5" aria-label="Page navigation">
           <Button
             variant="outline"
             size="icon"
@@ -75,24 +80,31 @@ export function Pagination({
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          {showFullPagination && getPageNumbers().map((p, i) =>
-            p === "ellipsis" ? (
-              <span key={`ellipsis-${i}`} className="px-2 text-gray-400">
-                ...
-              </span>
-            ) : (
-              <Button
-                key={p}
-                variant={page === p ? "primary" : "outline"}
-                size="icon"
-                className={cn("h-8 w-8 rounded text-sm", page === p && "bg-[#7C3AED] text-white hover:bg-[#7C3AED]/90")}
-                onClick={() => onPageChange(p)}
-                aria-label={`Page ${p}`}
-              >
-                {p}
-              </Button>
-            )
-          )}
+          {showFullPagination &&
+            getPageNumbers().map((p, i) =>
+              p === "ellipsis" ? (
+                <span key={`ellipsis-${i}`} className="px-1.5 text-sm text-gray-400">
+                  ...
+                </span>
+              ) : (
+                <Button
+                  key={p}
+                  variant="outline"
+                  size="icon"
+                  className={cn(
+                    "h-8 w-8 rounded text-sm",
+                    page === p
+                      ? "border-2 border-blue-400 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-500 dark:bg-blue-950/50 dark:text-blue-300 dark:hover:bg-blue-950/70"
+                      : "border border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+                  )}
+                  onClick={() => onPageChange(p)}
+                  aria-label={`Page ${p}`}
+                  aria-current={page === p ? "page" : undefined}
+                >
+                  {p}
+                </Button>
+              )
+            )}
           {!showFullPagination && totalPages > 1 && (
             <span className="px-2 text-sm text-gray-600">{page}</span>
           )}
@@ -107,12 +119,14 @@ export function Pagination({
             <ChevronRight className="h-4 w-4" />
           </Button>
         </nav>
+
         {onPageSizeChange && (
           <div className="flex items-center gap-1.5 text-sm text-gray-600">
             <select
-              className="rounded border border-gray-300 bg-white px-2 py-1 text-sm"
+              className="rounded border border-gray-300 bg-white px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"
               value={pageSize}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}
+              aria-label="Items per page"
             >
               {pageSizeOptions.map((n) => (
                 <option key={n} value={n}>

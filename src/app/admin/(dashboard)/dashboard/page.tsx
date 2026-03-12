@@ -7,25 +7,58 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Package, Users, ShoppingCart, FileText, Eye, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/ui";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { BillAmountChart } from "@/components/admin/BillAmountChart";
+import { OrderStatisticsCard } from "@/components/admin/OrderStatisticsCard";
+import { DashboardNotificationsCard } from "@/components/admin/DashboardNotificationsCard";
 
 export default async function DashboardPage() {
   await connectDB();
-  const [productCount, clientCount, orderCount, billCount, latestOrders] =
-    await Promise.all([
-      Product.countDocuments(),
-      Client.countDocuments(),
-      Order.countDocuments(),
-      Bill.countDocuments(),
-      Order.find()
-        .sort({ createdDate: -1 })
-        .limit(10)
-        .populate("clientId", "firstName lastName phoneNumber")
-        .lean(),
-    ]);
+  const [
+    productCount,
+    clientCount,
+    orderCount,
+    billCount,
+    latestOrders,
+    revenueResult,
+    statusCountsResult,
+  ] = await Promise.all([
+    Product.countDocuments(),
+    Client.countDocuments(),
+    Order.countDocuments(),
+    Bill.countDocuments(),
+    Order.find()
+      .sort({ createdDate: -1 })
+      .limit(10)
+      .populate("clientId", "firstName lastName phoneNumber")
+      .lean(),
+    Order.aggregate<{ _id: null; totalRevenue: number }>([
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: {
+            $sum: { $multiply: ["$items.quantity", "$items.price"] },
+          },
+        },
+      },
+    ]),
+    Order.aggregate<{ _id: string; count: number }>([
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+    ]),
+  ]);
   const dispatchOrders = await Order.countDocuments({ status: "Dispatch Stage" });
   const pendingBills = await Bill.countDocuments({ status: "Pending" });
+
+  const totalRevenue = revenueResult[0]?.totalRevenue ?? 0;
+  const statusCounts: Record<string, number> = {};
+  statusCountsResult.forEach((row) => {
+    statusCounts[row._id] = row.count;
+  });
+  const orderStats = {
+    totalRevenue,
+    totalOrders: orderCount,
+    statusCounts,
+  };
 
   const stats = [
     {
@@ -96,6 +129,21 @@ export default async function DashboardPage() {
             </Card>
           </Link>
         ))}
+      </div>
+
+      {/* Recent notifications: shown until admin sees (marks as read) */}
+      <div className="mt-6 sm:mt-8">
+        <DashboardNotificationsCard />
+      </div>
+
+      {/* Bill performance (left) and Order Statistics (right) in one row */}
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:mt-8 lg:grid-cols-2 lg:gap-6">
+        <Card className="overflow-hidden">
+          <CardContent className="p-4 sm:p-6">
+            <BillAmountChart />
+          </CardContent>
+        </Card>
+        <OrderStatisticsCard data={orderStats} />
       </div>
 
       {/* Recent Summary: latest 10 orders only; "View All" goes to full orders list */}
@@ -190,7 +238,7 @@ export default async function DashboardPage() {
                           <Link
                             href={`/admin/orders/${order._id}`}
                             aria-label={`View order ${order._id}`}
-                            className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
+                            className="inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-accent hover:text-foreground"
                           >
                             <Eye className="h-4 w-4 text-muted-foreground hover:text-foreground" />
                           </Link>

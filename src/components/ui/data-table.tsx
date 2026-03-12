@@ -22,7 +22,7 @@ interface DataTableProps<T extends { _id: string }> {
   className?: string;
   /** Alternating row background (white / gray-50) */
   striped?: boolean;
-  /** Max height for table scroll area (default: 60vh). Only the table body scrolls. */
+  /** Max height for the scrollable body area (default: 60vh). Only the tbody scrolls; thead stays fixed. */
   maxHeight?: string;
 }
 
@@ -46,23 +46,24 @@ export function DataTable<T extends { _id: string }>({
         isFullHeight && "flex h-full min-h-0 flex-col",
         className
       )}
+      style={isFullHeight ? { minHeight: 0 } : undefined}
     >
       <div
         className={cn(
           "overflow-auto overflow-x-auto",
           isFullHeight && "min-h-0 flex-1"
         )}
-        style={isFullHeight ? undefined : { maxHeight }}
+        style={isFullHeight ? { minHeight: 0 } : { maxHeight }}
       >
-        <table className="w-full text-sm">
-          <thead className="sticky top-0 z-10 bg-gray-50 shadow-[0_1px_0_0_rgba(0,0,0,0.05)]">
-          <tr className="border-b border-gray-200">
+        <table className="w-full border-collapse text-sm">
+          <thead className="sticky top-0 z-20 border-b-2 border-gray-200 bg-gray-100 shadow-[0_1px_3px_0_rgba(0,0,0,0.08)] [&>tr]:bg-gray-100">
+          <tr>
             {columns.map((col) => (
               <th
                 key={col.id}
                 className={cn(
-                  "bg-gray-50 px-4 py-3.5 text-left font-semibold text-gray-900",
-                  col.sortable && "cursor-pointer select-none hover:bg-gray-100",
+                  "bg-gray-100 px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-700",
+                  col.sortable && "cursor-pointer select-none hover:bg-gray-200",
                   col.className
                 )}
                 onClick={() => col.sortable && onSort?.(col.id)}
@@ -77,7 +78,11 @@ export function DataTable<T extends { _id: string }>({
                 </span>
               </th>
             ))}
-            {actions && <th className="w-[100px] px-4 py-3.5 text-right font-semibold text-gray-900">Actions</th>}
+            {actions && (
+              <th className="sticky top-0 z-20 min-w-[120px] bg-gray-100 pl-4 pr-6 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-700">
+                ACTIONS
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -107,7 +112,7 @@ export function DataTable<T extends { _id: string }>({
                   </td>
                 ))}
                 {actions && (
-                  <td className="px-4 py-3 text-right">{actions(row)}</td>
+                  <td className="pl-4 pr-6 py-3 text-right">{actions(row)}</td>
                 )}
               </tr>
             ))
