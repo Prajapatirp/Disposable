@@ -9,10 +9,13 @@ export interface IOrderItem {
   variantId: mongoose.Types.ObjectId;
   quantity: number;
   price: number;
+  /** Quantity already returned (added back to stock). Default 0. */
+  returnedQuantity?: number;
 }
 
 export interface IOrder {
   _id: mongoose.Types.ObjectId;
+  orderNumber?: string;
   clientId: mongoose.Types.ObjectId;
   items: IOrderItem[];
   status: OrderStatus;
@@ -27,12 +30,14 @@ const OrderItemSchema = new mongoose.Schema<IOrderItem>(
     variantId: { type: mongoose.Schema.Types.ObjectId, required: true },
     quantity: { type: Number, required: true },
     price: { type: Number, required: true },
+    returnedQuantity: { type: Number, default: 0 },
   },
   { _id: true }
 );
 
 const OrderSchema = new mongoose.Schema<IOrder>(
   {
+    orderNumber: { type: String, unique: true, sparse: true },
     clientId: { type: mongoose.Schema.Types.ObjectId, ref: "Client", required: true },
     items: [OrderItemSchema],
     status: { type: String, required: true, enum: ORDER_STATUSES, default: "Dispatch Stage" },
