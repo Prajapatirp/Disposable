@@ -24,6 +24,8 @@ const badgeVariants = cva(
           "border-transparent bg-amber-500/20 text-amber-700 dark:text-amber-400",
         paid:
           "border-transparent bg-emerald-500/20 text-emerald-700 dark:text-emerald-400",
+        superseded:
+          "border-transparent bg-muted text-muted-foreground",
         cancelled:
           "border-transparent bg-muted text-muted-foreground",
         returned:
@@ -59,7 +61,9 @@ export function StatusBadge({
     type === "bill"
       ? status === "Paid"
         ? "paid"
-        : "pending"
+        : status === "Superseded"
+          ? "superseded"
+          : "pending"
       : status === "Completed"
         ? "completed"
         : status === "Returned"

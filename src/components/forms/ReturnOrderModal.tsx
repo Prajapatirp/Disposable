@@ -20,6 +20,8 @@ interface ReturnOrderModalProps {
   onClose: () => void;
   orderId: string;
   items: ReturnOrderItem[];
+  /** When "Dispatch Stage", full order return is allowed (no item qty). When "Completed", item-level return. */
+  orderStatus?: string;
   onSuccess: () => void;
 }
 
@@ -28,8 +30,10 @@ export function ReturnOrderModal({
   onClose,
   orderId,
   items,
+  orderStatus = "Completed",
   onSuccess,
 }: ReturnOrderModalProps) {
+  const isDispatchStage = orderStatus === "Dispatch Stage";
   const [returnQtys, setReturnQtys] = useState<number[]>(() =>
     items.map(() => 0)
   );
@@ -61,11 +65,36 @@ export function ReturnOrderModal({
     });
   };
 
-  const returnsPayload = returnQtys
-    .map((qty, itemIndex) => (qty > 0 ? { itemIndex, quantityToReturn: qty } : null))
-    .filter(Boolean) as { itemIndex: number; quantityToReturn: number }[];
+  const returnsPayload = isDispatchStage
+    ? []
+    : returnQtys
+        .map((qty, itemIndex) => (qty > 0 ? { itemIndex, quantityToReturn: qty } : null))
+        .filter(Boolean) as { itemIndex: number; quantityToReturn: number }[];
 
   const handleSubmit = async () => {
+    if (isDispatchStage) {
+      setSubmitting(true);
+      try {
+        const res = await fetch(`/api/orders/${orderId}/return`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ returns: [] }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.error || "Failed to process return");
+        }
+        toast.success("Order returned");
+        resetForm();
+        onSuccess();
+        onClose();
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Failed to process return");
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
     if (returnsPayload.length === 0) {
       toast.error("Enter quantity to return for at least one item");
       return;
@@ -95,8 +124,11 @@ export function ReturnOrderModal({
   return (
     <Modal open={open} onClose={handleClose} title="Return order" size="lg">
       <p className="mb-4 text-sm text-muted-foreground">
-        Enter the quantity to return for each product. Stock will be updated accordingly.
+        {isDispatchStage
+          ? "This order is in Dispatch Stage. Click below to mark the entire order as returned."
+          : "Enter the quantity to return for each product. Stock will be updated accordingly."}
       </p>
+      {!isDispatchStage && (
       <div className="max-h-[50vh] overflow-auto">
         <table className="w-full text-sm">
           <thead>
@@ -140,6 +172,7 @@ export function ReturnOrderModal({
           </tbody>
         </table>
       </div>
+      )}
       <div className="mt-4 flex justify-end gap-2 border-t pt-4">
         <Button type="button" variant="outline" onClick={handleClose}>
           Cancel
@@ -147,9 +180,9 @@ export function ReturnOrderModal({
         <PrimaryButton
           type="button"
           onClick={handleSubmit}
-          disabled={submitting || returnsPayload.length === 0}
+          disabled={submitting || (!isDispatchStage && returnsPayload.length === 0)}
         >
-          {submitting ? "Processing..." : "Process return"}
+          {submitting ? "Processing..." : isDispatchStage ? "Return entire order" : "Process return"}
         </PrimaryButton>
       </div>
     </Modal>

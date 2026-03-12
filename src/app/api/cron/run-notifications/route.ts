@@ -13,7 +13,7 @@ import { SchedulerService } from "@/lib/services/schedulerService";
  *    - checkPendingBills(): bills with status "Pending" → create BILL_PENDING per bill (skip if unread exists).
  * 4. NotificationService.createNotification() prevents duplicates by checking (referenceId, type, isRead: false).
  *
- * SCHEDULE: Every 12 hours (0 */12 * * * — runs at 00:00 and 12:00 UTC).
+ * SCHEDULE: Every 12 hours (e.g. 00:00 and 12:00 UTC).
  * All checks (low stock, dispatch reminder, pending bills) run together.
  *
  * In local dev, cron does NOT run automatically. Use the "Run checks" button in the notification dropdown to trigger.

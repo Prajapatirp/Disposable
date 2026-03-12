@@ -10,6 +10,7 @@ import {
   FilterDrawer,
   Input,
   Select,
+  Tooltip,
 } from "@/components/ui";
 import { PrimaryButton } from "@/components/ui/button";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
@@ -226,30 +227,36 @@ export default function ProductsPage() {
                 className="h-full min-h-0 w-full flex-1 rounded-none border-0 shadow-none"
                 emptyMessage="No records found."
               actions={(row) => (
-                <div className="flex justify-end gap-1">
-                  <Link
-                    href={`/admin/products/${row._id}`}
-                    aria-label="View product details"
-                    className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "h-8 w-8")}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Link>
-                  <Link
-                    href={`/admin/products/${row._id}/edit`}
-                    aria-label="Edit"
-                    className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "h-8 w-8")}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Link>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-red-600 hover:text-red-700"
-                    onClick={() => handleDelete(row._id)}
-                    aria-label="Delete"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                <div className="flex items-center justify-end gap-1">
+                  <Tooltip content="View product" side="left">
+                    <Link
+                      href={`/admin/products/${row._id}`}
+                      aria-label="View product details"
+                      className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "h-8 w-8")}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Link>
+                  </Tooltip>
+                  <Tooltip content="Edit product" side="left">
+                    <Link
+                      href={`/admin/products/${row._id}/edit`}
+                      aria-label="Edit"
+                      className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "h-8 w-8")}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Link>
+                  </Tooltip>
+                  <Tooltip content="Delete product" side="left">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-red-600 hover:text-red-700"
+                      onClick={() => handleDelete(row._id)}
+                      aria-label="Delete"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </Tooltip>
                 </div>
               )}
               />

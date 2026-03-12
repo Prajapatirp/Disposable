@@ -15,7 +15,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Valid clientId required" }, { status: 400 });
     }
     await connectDB();
-    const alreadyBilled = await Bill.find({ clientId }).select("orderIds").lean();
+    const alreadyBilled = await Bill.find({
+      clientId,
+      status: { $in: ["Pending", "Paid"] },
+    })
+      .select("orderIds")
+      .lean();
     const billedOrderIds = alreadyBilled.flatMap((b) => (b.orderIds as mongoose.Types.ObjectId[]));
     const orders = await Order.find({
       clientId,

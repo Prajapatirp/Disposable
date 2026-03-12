@@ -79,7 +79,7 @@ export function DataTable<T extends { _id: string }>({
               </th>
             ))}
             {actions && (
-              <th className="sticky top-0 z-20 w-[100px] bg-gray-100 px-4 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-700">
+              <th className="sticky top-0 z-20 min-w-[120px] bg-gray-100 pl-4 pr-6 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-700">
                 ACTIONS
               </th>
             )}
@@ -112,7 +112,7 @@ export function DataTable<T extends { _id: string }>({
                   </td>
                 ))}
                 {actions && (
-                  <td className="px-4 py-3 text-right">{actions(row)}</td>
+                  <td className="pl-4 pr-6 py-3 text-right">{actions(row)}</td>
                 )}
               </tr>
             ))

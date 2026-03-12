@@ -4,6 +4,7 @@ import Order from "@/lib/models/Order";
 import Product from "@/lib/models/Product";
 import Bill from "@/lib/models/Bill";
 import { requireAuth } from "@/lib/api-auth";
+import { OrderHistoryService } from "@/lib/services/orderHistoryService";
 import { z } from "zod";
 import mongoose from "mongoose";
 
@@ -89,17 +90,21 @@ export async function GET(req: NextRequest) {
         .populate("clientId", "firstName lastName phoneNumber address businessName")
         .sort({ createdDate: -1 })
         .lean(),
-      Bill.find({}).select("orderIds").lean(),
+      Bill.find({}).select("orderIds status").lean(),
     ]);
     const orderIdsInBills = new Set<string>();
+    const orderIdsWithPaidBill = new Set<string>();
     for (const bill of bills) {
+      const isPaid = bill.status === "Paid";
       for (const oid of bill.orderIds ?? []) {
         orderIdsInBills.add(String(oid));
+        if (isPaid) orderIdsWithPaidBill.add(String(oid));
       }
     }
     const ordersWithBillFlag = orders.map((o) => ({
       ...o,
       hasBill: orderIdsInBills.has(String(o._id)),
+      billPaid: orderIdsWithPaidBill.has(String(o._id)),
     }));
     return NextResponse.json(ordersWithBillFlag);
   } catch (e) {
@@ -154,6 +159,12 @@ export async function POST(req: NextRequest) {
       })),
       status: "Dispatch Stage",
     });
+    await OrderHistoryService.add(
+      order._id,
+      "Order Created",
+      "Order created",
+      auth.session.email ?? "Admin"
+    );
     const populated = await Order.findById(order._id)
       .populate("clientId", "firstName lastName phoneNumber address businessName")
       .lean();

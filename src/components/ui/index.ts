@@ -10,3 +10,4 @@ export { Pagination } from "./pagination";
 export { Filters } from "./filters";
 export { FilterDrawer } from "./filter-drawer";
 export { LoadingSpinner, PageLoading } from "./loading";
+export { Tooltip } from "./tooltip";

@@ -8,6 +8,7 @@ import {
   Filters,
   Pagination,
   PageLoading,
+  Tooltip,
 } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -169,30 +170,36 @@ export default function ClientsPage() {
               className="h-full min-h-0 w-full flex-1 rounded-none border-0 shadow-none"
               maxHeight="100%"
               actions={(row) => (
-                <div className="flex justify-end gap-2">
-                  <Link
-                    href={`/admin/clients/${row._id}`}
-                    aria-label="View client details"
-                    className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Link>
-                  <Link
-                    href={`/admin/clients/${row._id}/edit`}
-                    aria-label="Edit"
-                    className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Link>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(row._id)}
-                    aria-label="Delete"
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                <div className="flex items-center justify-end gap-2">
+                  <Tooltip content="View client" side="left">
+                    <Link
+                      href={`/admin/clients/${row._id}`}
+                      aria-label="View client details"
+                      className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Link>
+                  </Tooltip>
+                  <Tooltip content="Edit client" side="left">
+                    <Link
+                      href={`/admin/clients/${row._id}/edit`}
+                      aria-label="Edit"
+                      className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Link>
+                  </Tooltip>
+                  <Tooltip content="Delete client" side="left">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(row._id)}
+                      aria-label="Delete"
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </Tooltip>
                 </div>
               )}
             />

@@ -14,5 +14,5 @@ export type ProductCategory = (typeof PRODUCT_CATEGORIES)[number];
 export const ORDER_STATUSES = ["Dispatch Stage", "Completed", "Returned", "Cancelled"] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-export const BILL_STATUSES = ["Pending", "Paid"] as const;
+export const BILL_STATUSES = ["Pending", "Paid", "Superseded"] as const;
 export type BillStatus = (typeof BILL_STATUSES)[number];

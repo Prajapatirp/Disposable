@@ -11,6 +11,7 @@ import {
   FilterDrawer,
   Input,
   Select,
+  Tooltip,
 } from "@/components/ui";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -21,6 +22,7 @@ interface OrderItem {
   variantId: string;
   quantity: number;
   price: number;
+  returnedQuantity?: number;
 }
 
 interface Order {
@@ -31,6 +33,7 @@ interface Order {
   status: string;
   createdDate: string;
   hasBill?: boolean;
+  billPaid?: boolean;
 }
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
@@ -145,7 +148,10 @@ export default function OrdersPage() {
   }
 
   const totalAmount = (o: Order) =>
-    o.items.reduce((sum, i) => sum + i.quantity * i.price, 0);
+    o.items.reduce(
+      (sum, i) => sum + (i.quantity - (i.returnedQuantity ?? 0)) * i.price,
+      0
+    );
 
   const orderIdDisplay = (o: Order) =>
     `Order #${o.orderNumber ?? o._id.slice(-6)} -`;
@@ -278,44 +284,52 @@ export default function OrdersPage() {
               maxHeight="100%"
               actions={(row) => (
                 <div className="flex items-center justify-end gap-1">
-                  <Link href={`/admin/orders/${row._id}`}>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="View order"
-                      className="rounded-lg text-[#7C3AED] transition-colors hover:bg-[#7C3AED]/15 hover:text-[#7C3AED]"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </Link>
+                  <Tooltip content="View order" side="left">
+                    <Link href={`/admin/orders/${row._id}`}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="View order"
+                        className="rounded-lg text-[#7C3AED] transition-colors hover:bg-[#7C3AED]/15 hover:text-[#7C3AED]"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </Tooltip>
                   {!row.hasBill && (
-                    <Link
-                      href={`/admin/orders/${row._id}/edit`}
-                      aria-label="Edit order"
-                      className={buttonVariants({ variant: "ghost", size: "icon" }) + " rounded-lg text-foreground transition-colors hover:bg-[#7C3AED]/15 hover:text-[#7C3AED]"}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Link>
+                    <Tooltip content="Edit order" side="left">
+                      <Link
+                        href={`/admin/orders/${row._id}/edit`}
+                        aria-label="Edit order"
+                        className={buttonVariants({ variant: "ghost", size: "icon" }) + " rounded-lg text-foreground transition-colors hover:bg-[#7C3AED]/15 hover:text-[#7C3AED]"}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Link>
+                    </Tooltip>
                   )}
-                  {row.status === "Completed" && (
-                    <Link
-                      href={`/admin/orders/${row._id}?openReturn=1`}
-                      aria-label="Return order"
-                      className={buttonVariants({ variant: "ghost", size: "icon" }) + " rounded-lg text-blue-600 transition-colors hover:bg-blue-500/15 hover:text-blue-600"}
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                    </Link>
+                  {row.status === "Completed" && !row.billPaid && (
+                    <Tooltip content="Return order" side="left">
+                      <Link
+                        href={`/admin/orders/${row._id}?openReturn=1`}
+                        aria-label="Return order"
+                        className={buttonVariants({ variant: "ghost", size: "icon" }) + " rounded-lg text-blue-600 transition-colors hover:bg-blue-500/15 hover:text-blue-600"}
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                      </Link>
+                    </Tooltip>
                   )}
                   {row.status === "Dispatch Stage" && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => cancelOrder(row._id)}
-                      aria-label="Cancel order"
-                      className="rounded-lg text-destructive transition-colors hover:bg-destructive/15 hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <Tooltip content="Cancel order" side="left">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => cancelOrder(row._id)}
+                        aria-label="Cancel order"
+                        className="rounded-lg text-destructive transition-colors hover:bg-destructive/15 hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </Tooltip>
                   )}
                 </div>
               )}

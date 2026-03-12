@@ -25,15 +25,19 @@ interface Order {
   _id: string;
   orderNumber?: string;
   createdDate: string;
-  items: { quantity: number; price: number }[];
+  items: { quantity: number; price: number; returnedQuantity?: number }[];
 }
 
 interface BillFormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  /** Pre-select this client when opening the form (e.g. after "Delete & generate new"). */
+  initialClientId?: string;
+  /** When regenerating a bill, pass the previous bill id so its history is copied to the new bill. */
+  previousBillId?: string;
 }
 
-export function BillForm({ onSuccess, onCancel }: BillFormProps) {
+export function BillForm({ onSuccess, onCancel, initialClientId, previousBillId }: BillFormProps) {
   const [clients, setClients] = useState<Client[]>([]);
   const [dispatchedOrders, setDispatchedOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
@@ -46,7 +50,7 @@ export function BillForm({ onSuccess, onCancel }: BillFormProps) {
     setValue,
   } = useForm<BillFormValues>({
     resolver: zodResolver(billSchema),
-    defaultValues: { clientId: "", orderIds: [] },
+    defaultValues: { clientId: initialClientId ?? "", orderIds: [] },
   });
 
   const clientId = watch("clientId");
@@ -54,6 +58,12 @@ export function BillForm({ onSuccess, onCancel }: BillFormProps) {
   useEffect(() => {
     fetch("/api/clients").then((r) => r.json()).then(setClients).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (initialClientId && clients.some((c) => c._id === initialClientId)) {
+      setValue("clientId", initialClientId);
+    }
+  }, [initialClientId, clients, setValue]);
 
   useEffect(() => {
     if (!clientId) {
@@ -88,9 +98,19 @@ export function BillForm({ onSuccess, onCancel }: BillFormProps) {
   const totalFromSelected = dispatchedOrders
     .filter((o) => orderIds.includes(o._id))
     .reduce((sum, o) => {
-      const orderTotal = o.items.reduce((s, i) => s + i.quantity * i.price, 0);
+      const orderTotal = o.items.reduce(
+        (s, i) => s + (i.quantity - (i.returnedQuantity ?? 0)) * i.price,
+        0
+      );
       return sum + orderTotal;
     }, 0);
+
+  function orderRemainingTotal(order: Order): number {
+    return order.items.reduce(
+      (s, i) => s + (i.quantity - (i.returnedQuantity ?? 0)) * i.price,
+      0
+    );
+  }
 
   async function onSubmit(data: BillFormValues) {
     try {
@@ -100,6 +120,7 @@ export function BillForm({ onSuccess, onCancel }: BillFormProps) {
         body: JSON.stringify({
           clientId: data.clientId,
           orderIds: data.orderIds,
+          ...(previousBillId ? { previousBillId } : {}),
         }),
       });
       if (!res.ok) {
@@ -138,10 +159,7 @@ export function BillForm({ onSuccess, onCancel }: BillFormProps) {
           ) : (
             <div className="max-h-60 space-y-2 overflow-y-auto rounded border p-3">
               {dispatchedOrders.map((order) => {
-                const orderTotal = order.items.reduce(
-                  (s, i) => s + i.quantity * i.price,
-                  0
-                );
+                const orderTotal = orderRemainingTotal(order);
                 const selected = orderIds.includes(order._id);
                 return (
                   <label
