@@ -191,7 +191,7 @@ export default function OrdersPage() {
   ];
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-6">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden p-4 sm:p-6">
       <div className="mb-4 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-primary">Orders</h1>
@@ -275,7 +275,7 @@ export default function OrdersPage() {
       {loading ? (
         <PageLoading />
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="flex min-h-0 flex-1 flex-col rounded-lg border border-gray-200 bg-white shadow-sm">
           <div className="relative min-h-0 flex-1 overflow-hidden" style={{ minHeight: 200 }}>
             <DataTable
               columns={columns}
@@ -290,7 +290,7 @@ export default function OrdersPage() {
                         variant="ghost"
                         size="icon"
                         aria-label="View order"
-                        className="rounded-lg text-[#7C3AED] transition-colors hover:bg-[#7C3AED]/15 hover:text-[#7C3AED]"
+                        className="rounded-lg text-primary transition-colors hover:bg-primary/10 hover:text-primary"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -301,7 +301,7 @@ export default function OrdersPage() {
                       <Link
                         href={`/admin/orders/${row._id}/edit`}
                         aria-label="Edit order"
-                        className={buttonVariants({ variant: "ghost", size: "icon" }) + " rounded-lg text-foreground transition-colors hover:bg-[#7C3AED]/15 hover:text-[#7C3AED]"}
+                        className={buttonVariants({ variant: "ghost", size: "icon" }) + " rounded-lg text-foreground transition-colors hover:bg-primary/10 hover:text-primary"}
                       >
                         <Pencil className="h-4 w-4" />
                       </Link>

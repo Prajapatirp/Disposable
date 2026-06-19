@@ -19,7 +19,6 @@ export interface IBill {
   updatedAt: Date;
 }
 
-
 const BillSchema = new mongoose.Schema<IBill>(
   {
     billNumber: { type: String, required: true, unique: true },

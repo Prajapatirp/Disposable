@@ -141,7 +141,7 @@ export function NotificationDropdown() {
       <Button
         variant="ghost"
         size="icon"
-        className="relative rounded-full text-white/80 hover:bg-white/10 hover:text-white"
+        className="relative rounded-full text-slate-600 hover:bg-blue-50 hover:text-blue-700"
         onClick={() => setOpen((o) => !o)}
         aria-label={`Notifications${badgeLabel ? `, ${badgeLabel} unread` : ""}`}
         aria-expanded={open}

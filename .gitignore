@@ -42,5 +42,9 @@ Thumbs.db
 coverage/
 .nyc_output/
 
+# User-uploaded variant images (keep folder via .gitkeep)
+public/uploads/product-variants/*
+!public/uploads/product-variants/.gitkeep
+
 # Misc
 *.pem

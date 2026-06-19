@@ -2,8 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Button } from "./button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 
 interface PaginationProps {
   page: number;
@@ -14,6 +13,116 @@ interface PaginationProps {
   onPageSizeChange?: (size: number) => void;
   pageSizeOptions?: number[];
   className?: string;
+}
+
+function PageSizeSelect({
+  value,
+  options,
+  onChange,
+}: {
+  value: number;
+  options: number[];
+  onChange: (size: number) => void;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const rootRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        className={cn(
+          "inline-flex h-8 w-[4.5rem] items-center justify-between rounded border bg-white px-2 text-sm text-gray-900 transition-colors",
+          open
+            ? "border-primary ring-2 ring-primary/15"
+            : "border-gray-300 hover:border-gray-400"
+        )}
+        onClick={() => setOpen((prev) => !prev)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label="Rows per page"
+      >
+        <span className="tabular-nums">{value}</span>
+        <ChevronDown
+          className={cn(
+            "h-3.5 w-3.5 shrink-0 text-gray-500 transition-transform duration-200",
+            open && "-rotate-180"
+          )}
+          aria-hidden
+        />
+      </button>
+
+      {open && (
+        <ul
+          role="listbox"
+          aria-label="Rows per page options"
+          className="absolute bottom-[calc(100%+4px)] right-0 z-50 w-[4.5rem] overflow-hidden rounded border border-gray-300 bg-white py-0.5 shadow-lg"
+        >
+          {options.map((n) => {
+            const selected = n === value;
+            return (
+              <li key={n} role="option" aria-selected={selected}>
+                <button
+                  type="button"
+                  className={cn(
+                    "flex w-full items-center justify-center px-2 py-1.5 text-sm tabular-nums transition-colors",
+                    selected
+                      ? "bg-primary font-medium text-white"
+                      : "text-gray-800 hover:bg-gray-100"
+                  )}
+                  onClick={() => {
+                    onChange(n);
+                    setOpen(false);
+                  }}
+                >
+                  {n}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function getPageNumbers(page: number, totalPages: number): (number | "ellipsis")[] {
+  if (totalPages <= 5) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+
+  const pages: (number | "ellipsis")[] = [1];
+
+  if (page <= 3) {
+    pages.push(2, 3, "ellipsis", totalPages);
+  } else if (page >= totalPages - 2) {
+    pages.push("ellipsis", totalPages - 2, totalPages - 1, totalPages);
+  } else {
+    pages.push("ellipsis", page, "ellipsis", totalPages);
+  }
+
+  return pages;
 }
 
 export function Pagination({
@@ -28,114 +137,100 @@ export function Pagination({
 }: PaginationProps) {
   const showFullPagination = totalRecords !== undefined;
   const prevDisabled = page <= 1;
-  const nextDisabled = page >= totalPages;
-
-  const getPageNumbers = () => {
-    const pages: (number | "ellipsis")[] = [];
-    if (totalPages <= 7) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-      return pages;
-    }
-    pages.push(1);
-    if (page > 3) pages.push("ellipsis");
-    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) {
-      if (!pages.includes(i)) pages.push(i);
-    }
-    if (page < totalPages - 2) pages.push("ellipsis");
-    if (totalPages > 1) pages.push(totalPages);
-    return Array.from(new Set(pages)).sort((a, b) => (a === "ellipsis" ? 1 : b === "ellipsis" ? -1 : (a as number) - (b as number)));
-  };
+  const nextDisabled = page >= totalPages || totalPages === 0;
 
   if (!showFullPagination && totalPages <= 1) return null;
+
+  const safeTotalPages = Math.max(totalPages, 1);
 
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 bg-white px-4 py-3",
+        "relative z-10 flex flex-wrap items-center justify-between gap-4 border-t border-gray-200 bg-gray-50 px-4 py-3",
         className
       )}
       aria-label="Pagination"
     >
-      {/* Left: Total Records */}
       <div className="text-sm text-gray-600">
         {showFullPagination ? (
           <>
-            Total Records: <span className="font-medium">{totalRecords}</span>
+            Total <span className="font-semibold text-gray-900">{totalRecords}</span>
           </>
         ) : (
-          <>Page {page} of {totalPages}</>
+          <>
+            Page <span className="font-semibold text-gray-900">{page}</span> of{" "}
+            <span className="font-semibold text-gray-900">{totalPages}</span>
+          </>
         )}
       </div>
 
-      {/* Center + Right: Page numbers and Per page selector in one row */}
-      <div className="flex flex-wrap items-center gap-3">
-        <nav className="flex items-center gap-0.5" aria-label="Page navigation">
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 rounded"
+      <div className="flex flex-wrap items-center gap-5">
+        {onPageSizeChange && (
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span>Rows per page</span>
+            <PageSizeSelect
+              value={pageSize}
+              options={pageSizeOptions}
+              onChange={onPageSizeChange}
+            />
+          </div>
+        )}
+
+        <nav className="flex items-center gap-1" aria-label="Page navigation">
+          <button
+            type="button"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-600 transition-colors hover:bg-gray-200/70 hover:text-gray-900 disabled:pointer-events-none disabled:opacity-40"
             onClick={() => onPageChange(page - 1)}
             disabled={prevDisabled}
             aria-label="Previous page"
           >
             <ChevronLeft className="h-4 w-4" />
-          </Button>
+          </button>
+
           {showFullPagination &&
-            getPageNumbers().map((p, i) =>
+            getPageNumbers(page, safeTotalPages).map((p, i) =>
               p === "ellipsis" ? (
-                <span key={`ellipsis-${i}`} className="px-1.5 text-sm text-gray-400">
-                  ...
+                <span
+                  key={`ellipsis-${i}`}
+                  className="inline-flex h-8 min-w-8 items-center justify-center px-1 text-sm text-gray-500"
+                >
+                  …
                 </span>
               ) : (
-                <Button
+                <button
                   key={p}
-                  variant="outline"
-                  size="icon"
+                  type="button"
                   className={cn(
-                    "h-8 w-8 rounded text-sm",
+                    "inline-flex h-8 min-w-8 items-center justify-center text-sm transition-colors",
                     page === p
-                      ? "border-2 border-blue-400 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-500 dark:bg-blue-950/50 dark:text-blue-300 dark:hover:bg-blue-950/70"
-                      : "border border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+                      ? "rounded-full bg-gray-900 font-medium text-white"
+                      : "rounded-md text-gray-700 hover:bg-gray-200/70 hover:text-gray-900"
                   )}
                   onClick={() => onPageChange(p)}
                   aria-label={`Page ${p}`}
                   aria-current={page === p ? "page" : undefined}
                 >
                   {p}
-                </Button>
+                </button>
               )
             )}
+
           {!showFullPagination && totalPages > 1 && (
-            <span className="px-2 text-sm text-gray-600">{page}</span>
+            <span className="inline-flex h-8 min-w-8 items-center justify-center rounded-full bg-gray-900 text-sm font-medium text-white">
+              {page}
+            </span>
           )}
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 rounded"
+
+          <button
+            type="button"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-600 transition-colors hover:bg-gray-200/70 hover:text-gray-900 disabled:pointer-events-none disabled:opacity-40"
             onClick={() => onPageChange(page + 1)}
             disabled={nextDisabled}
             aria-label="Next page"
           >
             <ChevronRight className="h-4 w-4" />
-          </Button>
+          </button>
         </nav>
-
-        {onPageSizeChange && (
-          <div className="flex items-center gap-1.5 text-sm text-gray-600">
-            <select
-              className="rounded border border-gray-300 bg-white px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"
-              value={pageSize}
-              onChange={(e) => onPageSizeChange(Number(e.target.value))}
-              aria-label="Items per page"
-            >
-              {pageSizeOptions.map((n) => (
-                <option key={n} value={n}>
-                  {n} / page
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
       </div>
     </div>
   );

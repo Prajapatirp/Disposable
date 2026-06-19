@@ -1,15 +1,15 @@
 import mongoose from "mongoose";
 import { IVariant, VariantSchema } from "./Variant";
-import { PRODUCT_CATEGORIES, type ProductCategory } from "../constants";
-
-export { PRODUCT_CATEGORIES };
-export type { ProductCategory };
 
 export interface IProduct {
   _id: mongoose.Types.ObjectId;
   name: string;
-  category: ProductCategory;
+  /** Denormalized category name for display and catalog filters. */
+  category: string;
+  categoryId?: mongoose.Types.ObjectId;
   description?: string;
+  /** List/card hero image on the storefront (optional). */
+  thumbnailUrl?: string;
   variants: IVariant[];
   createdAt: Date;
   updatedAt: Date;
@@ -18,11 +18,15 @@ export interface IProduct {
 const ProductSchema = new mongoose.Schema<IProduct>(
   {
     name: { type: String, required: true },
-    category: { type: String, required: true, enum: PRODUCT_CATEGORIES },
+    category: { type: String, required: true },
+    categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
     description: { type: String },
+    thumbnailUrl: { type: String },
     variants: [VariantSchema],
   },
   { timestamps: true }
 );
+
+ProductSchema.index({ categoryId: 1 });
 
 export default (mongoose.models?.Product as mongoose.Model<IProduct>) || mongoose.model<IProduct>("Product", ProductSchema);
