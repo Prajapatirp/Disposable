@@ -19,6 +19,8 @@ interface Product {
     variantName: string;
     quantityAvailable: number;
     pricePerUnit: number;
+    imageUrl?: string;
+    imageUrls?: string[];
   }[];
 }
 
@@ -51,7 +53,7 @@ export default function ProductDetailPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-[#7C3AED]">
+            <h1 className="text-2xl font-bold tracking-tight text-primary">
               {product.name}
             </h1>
             <p className="text-muted-foreground">Product details</p>
@@ -102,17 +104,44 @@ export default function ProductDetailPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b text-left text-muted-foreground">
+                      <th className="pb-2 pr-4 font-medium">Image</th>
                       <th className="pb-2 pr-4 font-medium">Variant name</th>
                       <th className="pb-2 pr-4 font-medium">Qty available</th>
                       <th className="pb-2 font-medium">Price per unit (₹)</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {product.variants.map((v) => (
+                    {product.variants.map((v) => {
+                      const imgs =
+                        v.imageUrls?.length ? v.imageUrls : v.imageUrl ? [v.imageUrl] : [];
+                      return (
                       <tr
                         key={v._id}
                         className="border-b last:border-0"
                       >
+                        <td className="py-2.5 pr-4">
+                          {imgs.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {imgs.map((src, idx) => (
+                                <div
+                                  key={`${v._id}-img-${idx}`}
+                                  className="relative h-12 w-12 shrink-0 overflow-hidden rounded border bg-muted"
+                                >
+                                  <img
+                                    src={src}
+                                    alt=""
+                                    width={48}
+                                    height={48}
+                                    className="h-12 w-12 object-cover"
+                                    loading="lazy"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </td>
                         <td className="py-2.5 pr-4 font-medium">
                           {v.variantName}
                         </td>
@@ -121,7 +150,8 @@ export default function ProductDetailPage() {
                           ₹{Number(v.pricePerUnit).toLocaleString()}
                         </td>
                       </tr>
-                    ))}
+                    );
+                    })}
                   </tbody>
                 </table>
               </div>

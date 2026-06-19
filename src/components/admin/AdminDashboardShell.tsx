@@ -23,14 +23,14 @@ export function AdminDashboardShell({ children, email }: AdminDashboardShellProp
   }, [pathname]);
 
   return (
-    <div className="flex min-h-screen w-full flex-col md:flex-row">
+    <div className="flex h-dvh w-full overflow-hidden md:flex-row">
       <AdminSidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onOpen={() => setSidebarOpen(true)}
         onToggle={() => setSidebarOpen((o) => !o)}
       />
-      <div className="relative flex min-h-screen min-w-0 flex-1 flex-col">
+      <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         <AdminNavbar
           email={email}
           onToggleSidebar={() => setSidebarOpen((o) => !o)}
@@ -38,11 +38,9 @@ export function AdminDashboardShell({ children, email }: AdminDashboardShellProp
         />
         <main
           id="admin-main-content"
-          className="relative min-h-0 flex-1 overflow-hidden bg-slate-100 pb-14 print:overflow-visible print:pb-0"
+          className="relative flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden bg-slate-100 pb-14 print:overflow-visible print:pb-0"
         >
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            {children}
-          </div>
+          {children}
         </main>
         <AdminFooter sidebarOpen={sidebarOpen} />
       </div>

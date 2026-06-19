@@ -13,7 +13,6 @@ import {
   Tooltip,
 } from "@/components/ui";
 import { PrimaryButton } from "@/components/ui/button";
-import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { toast } from "sonner";
 import { Pencil, Trash2, Plus, Filter, Eye } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -29,11 +28,6 @@ interface Product {
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
-const CATEGORY_OPTIONS = [
-  { value: "", label: "All" },
-  ...PRODUCT_CATEGORIES.map((c) => ({ value: c, label: c })),
-];
-
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +36,9 @@ export default function ProductsPage() {
   const [sortKey, setSortKey] = useState<string>("");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [categoryOptions, setCategoryOptions] = useState<{ value: string; label: string }[]>([
+    { value: "", label: "All" },
+  ]);
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
@@ -71,6 +68,19 @@ export default function ProductsPage() {
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!Array.isArray(data)) return;
+        setCategoryOptions([
+          { value: "", label: "All" },
+          ...data.map((c: { name: string }) => ({ value: c.name, label: c.name })),
+        ]);
+      })
+      .catch(() => {});
+  }, []);
 
   const clearFilters = () => {
     setSearch("");
@@ -126,7 +136,7 @@ export default function ProductsPage() {
       accessor: (row) => (
         <Link
           href={`/admin/products/${row._id}`}
-          className="text-left font-medium text-[#7C3AED] hover:underline"
+          className="text-left font-medium text-primary hover:underline"
         >
           {row.name}
         </Link>
@@ -142,9 +152,9 @@ export default function ProductsPage() {
   ];
 
   return (
-    <div className="flex h-full min-h-0 flex-col p-4 sm:p-6">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden p-4 sm:p-6">
       <div className="mb-4 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-[#7C3AED] sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-primary sm:text-3xl">
           Products
         </h1>
         <div className="flex items-center gap-2 sm:ml-auto">
@@ -157,7 +167,7 @@ export default function ProductsPage() {
             Filters
           </Button>
           <Link href="/admin/products/new">
-            <PrimaryButton className="rounded-lg bg-[#7C3AED] hover:bg-[#7C3AED]/90">
+            <PrimaryButton className="rounded-lg">
               <Plus className="mr-2 h-4 w-4" />
               Add Product
             </PrimaryButton>
@@ -190,7 +200,7 @@ export default function ProductsPage() {
           />
           <Select
             label="Category"
-            options={CATEGORY_OPTIONS}
+            options={categoryOptions}
             value={categoryFilter}
             onChange={setCategoryFilter}
             placeholder="All"
@@ -210,7 +220,7 @@ export default function ProductsPage() {
         </div>
       </FilterDrawer>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div className="flex min-h-0 flex-1 flex-col rounded-lg border border-gray-200 bg-white shadow-sm">
         {loading ? (
           <PageLoading />
         ) : (

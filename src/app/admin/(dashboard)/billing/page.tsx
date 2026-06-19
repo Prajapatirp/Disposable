@@ -229,7 +229,7 @@ export default function BillingPage() {
   ];
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col p-4 sm:p-6">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden p-4 sm:p-6">
       <div className="mb-4 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-primary">Billing</h1>
@@ -314,7 +314,7 @@ export default function BillingPage() {
       {loading ? (
         <PageLoading />
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+        <div className="flex min-h-0 flex-1 flex-col rounded-lg border border-gray-200 bg-white shadow-sm">
           <div className="relative min-h-0 flex-1 overflow-auto" style={{ minHeight: 200 }}>
             <table className="w-full border-collapse text-sm">
               <thead className="sticky top-0 z-20 border-b-2 border-gray-200 bg-gray-100 [&>tr]:bg-gray-100">

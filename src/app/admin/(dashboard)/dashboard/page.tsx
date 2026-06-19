@@ -66,7 +66,7 @@ export default async function DashboardPage() {
       value: productCount,
       icon: Package,
       href: "/admin/products",
-      color: "bg-violet-500/10 text-violet-600",
+      color: "bg-blue-500/10 text-blue-600",
     },
     {
       title: "Clients",

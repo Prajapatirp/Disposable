@@ -14,8 +14,17 @@ interface Product {
   _id: string;
   name: string;
   category: string;
+  categoryId?: string;
   description?: string;
-  variants: { _id: string; variantName: string; quantityAvailable: number; pricePerUnit: number }[];
+  thumbnailUrl?: string | null;
+  variants: {
+    _id: string;
+    variantName: string;
+    quantityAvailable: number;
+    pricePerUnit: number;
+    imageUrl?: string;
+    imageUrls?: string[];
+  }[];
 }
 
 export default function EditProductPage() {
@@ -62,13 +71,17 @@ export default function EditProductPage() {
             initial={{
               _id: product._id,
               name: product.name,
+              categoryId: product.categoryId ? String(product.categoryId) : undefined,
               category: product.category,
               description: product.description,
+              thumbnailUrl: product.thumbnailUrl ?? undefined,
               variants: product.variants?.map((v) => ({
                 _id: v._id,
                 variantName: v.variantName,
                 quantityAvailable: v.quantityAvailable,
                 pricePerUnit: v.pricePerUnit,
+                imageUrl: v.imageUrl,
+                imageUrls: v.imageUrls,
               })) ?? [],
             }}
             onSuccess={() => router.push("/admin/products")}

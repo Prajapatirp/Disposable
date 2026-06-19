@@ -1,11 +1,12 @@
 export { default as Admin } from "./Admin";
 export { default as Product } from "./Product";
+export { default as Category } from "./Category";
 export { default as Client } from "./Client";
 export { default as Order } from "./Order";
 export { default as Bill } from "./Bill";
 export { default as OrderHistory } from "./OrderHistory";
-export { PRODUCT_CATEGORIES } from "./Product";
 export { ORDER_STATUSES } from "./Order";
 export { BILL_STATUSES } from "./Bill";
 export type { IVariant } from "./Variant";
+export type { ICategory } from "./Category";
 export type { OrderHistoryStatus } from "./OrderHistory";
